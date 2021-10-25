@@ -149,11 +149,14 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 		var script []byte
 		var err error
 
+		var equal = false
 		if address == r.params.StakingTable {
+			equal = true
 			script, err = r.generate.GetStakedBalance(symbol)
 		} else {
 			script, err = r.generate.GetBalance(symbol)
 		}
+		fmt.Printf("Address %x stakingTable %x equal: %t\n", address, r.params.StakingTable, equal)
 
 		if err != nil {
 			return identifier.Block{}, nil, fmt.Errorf("could not generate script: %w", err)
