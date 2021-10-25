@@ -39,19 +39,19 @@ pub fun main(account: Address): UFix64 {
 	// Sum up all tokens from all delegators and all stake
 	let allNodeIDs = FlowIDTableStaking.getNodeIDs()
 
-    var totalTokens: UFix64 = 0.0
+    var stakedBalance: UFix64 = 0.0
 
     for nodeID in allNodeIDs {
         let nodeInfo = FlowIDTableStaking.NodeInfo(nodeID: nodeID)
         let delegatorsIDs = nodeInfo.delegators
 
-        totalTokens = totalTokens + nodeInfo.totalTokensInRecord()
+        stakedBalance = stakedBalance + nodeInfo.totalTokensInRecord()
 
         for delegatorID in delegatorsIDs {
             let delegatorInfo = FlowIDTableStaking.DelegatorInfo(nodeID: nodeID, delegatorID: delegatorID)
 
 
-            totalTokens = totalTokens + delegatorInfo.totalTokensInRecord()
+            stakedBalance = stakedBalance + delegatorInfo.totalTokensInRecord()
         }
     }
 
