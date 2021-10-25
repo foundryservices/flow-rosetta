@@ -26,8 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/optakt/flow-dps/models/convert"
-	"github.com/optakt/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/models/convert"
+	"github.com/dapperlabs/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/api/rosetta"
 	"github.com/optakt/flow-rosetta/rosetta/configuration"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"

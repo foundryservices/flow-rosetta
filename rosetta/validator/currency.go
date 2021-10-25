@@ -15,7 +15,7 @@
 package validator
 
 import (
-	"github.com/optakt/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/rosetta/failure"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
 )

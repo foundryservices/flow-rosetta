@@ -17,7 +17,7 @@ package validator
 import (
 	"github.com/go-playground/validator/v10"
 
-	"github.com/optakt/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/models/dps"
 )
 
 // Validator validates Rosetta object identifiers.

@@ -56,7 +56,7 @@ const (
 	rosettaVersionFilePath = "../rosetta/configuration/version.go"
 
 	flowModPath = "github.com/onflow/flow-go"
-	dpsModPath  = "github.com/optakt/flow-dps"
+	dpsModPath  = "github.com/dapperlabs/flow-dps"
 )
 
 func main() {
@@ -121,7 +121,7 @@ func MiddlewareVersion() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("could not find github.com/optakt/flow-dps dependency in go mod file")
+	return "", fmt.Errorf("could not find github.com/dapperlabs/flow-dps dependency in go mod file")
 }
 
 // NodeVersion parses the Go.mod file to retrieve the version of the Flow-go

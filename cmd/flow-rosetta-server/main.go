@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,10 +33,10 @@ import (
 
 	"github.com/onflow/flow-go-sdk/client"
 
-	api "github.com/optakt/flow-dps/api/dps"
-	"github.com/optakt/flow-dps/codec/zbor"
-	"github.com/optakt/flow-dps/models/dps"
-	"github.com/optakt/flow-dps/service/invoker"
+	api "github.com/dapperlabs/flow-dps/api/dps"
+	"github.com/dapperlabs/flow-dps/codec/zbor"
+	"github.com/dapperlabs/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/service/invoker"
 	"github.com/optakt/flow-rosetta/api/rosetta"
 	"github.com/optakt/flow-rosetta/rosetta/configuration"
 	"github.com/optakt/flow-rosetta/rosetta/converter"
@@ -154,7 +155,7 @@ wait:
 	config := configuration.New(params.ChainID)
 	validate := validator.New(params, index, config)
 	generate := scripts.NewGenerator(params)
-	invoke, err := invoker.New(index, invoker.WithCacheSize(flagCache))
+	invoke, err := invoker.New(index, invoker.WithCacheSize(flagCache), invoker.WithGasLimit(math.MaxUint64))
 	if err != nil {
 		log.Error().Err(err).Msg("could not initialize invoker")
 		return failure

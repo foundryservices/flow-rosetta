@@ -17,10 +17,11 @@ package mocks
 import "testing"
 
 type Generator struct {
-	GetBalanceFunc      func(symbol string) ([]byte, error)
-	TokensDepositedFunc func(symbol string) (string, error)
-	TokensWithdrawnFunc func(symbol string) (string, error)
-	TransferTokensFunc  func(symbol string) ([]byte, error)
+	GetBalanceFunc       func(symbol string) ([]byte, error)
+	GetStakedBalanceFunc func(symbol string) ([]byte, error)
+	TokensDepositedFunc  func(symbol string) (string, error)
+	TokensWithdrawnFunc  func(symbol string) (string, error)
+	TransferTokensFunc   func(symbol string) ([]byte, error)
 }
 
 func BaselineGenerator(t *testing.T) *Generator {
@@ -28,6 +29,9 @@ func BaselineGenerator(t *testing.T) *Generator {
 
 	g := Generator{
 		GetBalanceFunc: func(string) ([]byte, error) {
+			return []byte(GenericAmount(0).String()), nil
+		},
+		GetStakedBalanceFunc: func(string) ([]byte, error) {
 			return []byte(GenericAmount(0).String()), nil
 		},
 		TokensDepositedFunc: func(string) (string, error) {
@@ -45,6 +49,10 @@ func BaselineGenerator(t *testing.T) *Generator {
 }
 
 func (g *Generator) GetBalance(symbol string) ([]byte, error) {
+	return g.GetBalanceFunc(symbol)
+}
+
+func (g *Generator) GetStakedBalance(symbol string) ([]byte, error) {
 	return g.GetBalanceFunc(symbol)
 }
 

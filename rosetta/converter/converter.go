@@ -22,7 +22,7 @@ import (
 	"github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go/model/flow"
 
-	"github.com/optakt/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
 	"github.com/optakt/flow-rosetta/rosetta/object"
 	"github.com/optakt/flow-rosetta/rosetta/retriever"
