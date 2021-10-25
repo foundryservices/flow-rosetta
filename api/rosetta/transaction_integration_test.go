@@ -28,7 +28,7 @@ import (
 
 	"github.com/onflow/flow-go/model/flow"
 
-	"github.com/dapperabs/flow-dps/models/dps"
+	"github.com/dapperlabs/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/api/rosetta"
 	"github.com/optakt/flow-rosetta/rosetta/configuration"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"

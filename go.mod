@@ -3,6 +3,7 @@ module github.com/optakt/flow-rosetta
 go 1.17
 
 require (
+	github.com/dapperlabs/flow-dps v1.3.4-0.20211025195723-f4bbc52c79ad
 	github.com/dgraph-io/badger/v2 v2.2007.4
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/klauspost/compress v1.13.5
@@ -28,7 +29,6 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/dapperlabs/flow-dps v1.3.4-0.20211025180839-904fd137391b // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
