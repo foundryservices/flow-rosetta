@@ -24,21 +24,23 @@ import (
 
 // Generator dynamically generates Cadence scripts from templates.
 type Generator struct {
-	params          dps.Params
-	getBalance      *template.Template
-	transferTokens  *template.Template
-	tokensDeposited *template.Template
-	tokensWithdrawn *template.Template
+	params           dps.Params
+	getBalance       *template.Template
+	getStakedBalance *template.Template
+	transferTokens   *template.Template
+	tokensDeposited  *template.Template
+	tokensWithdrawn  *template.Template
 }
 
 // NewGenerator returns a Generator using the given parameters.
 func NewGenerator(params dps.Params) *Generator {
 	g := Generator{
-		params:          params,
-		getBalance:      template.Must(template.New("get_balance").Parse(getBalance)),
-		transferTokens:  template.Must(template.New("transfer_tokens").Parse(transferTokens)),
-		tokensDeposited: template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
-		tokensWithdrawn: template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
+		params:           params,
+		getBalance:       template.Must(template.New("get_balance").Parse(getBalance)),
+		getStakedBalance: template.Must(template.New("get_staked_balance").Parse(getStakedBalance)),
+		transferTokens:   template.Must(template.New("transfer_tokens").Parse(transferTokens)),
+		tokensDeposited:  template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
+		tokensWithdrawn:  template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
 	}
 	return &g
 }
@@ -46,6 +48,11 @@ func NewGenerator(params dps.Params) *Generator {
 // GetBalance generates a Cadence script to retrieve the balance of an account.
 func (g *Generator) GetBalance(symbol string) ([]byte, error) {
 	return g.bytes(g.getBalance, symbol)
+}
+
+// GetStakedBalance generates a Cadence script to retrieve the balance of an account with
+func (g *Generator) GetStakedBalance(symbol string) ([]byte, error) {
+	return g.bytes(g.getStakedBalance, symbol)
 }
 
 // TransferTokens generates a Cadence script to operate a token transfer transaction.

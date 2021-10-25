@@ -18,6 +18,7 @@ package retriever
 // balances as well as the amounts deposited and withdrawn for a given token.
 type Generator interface {
 	GetBalance(symbol string) ([]byte, error)
+	GetStakedBalance(symbol string) ([]byte, error)
 	TokensDeposited(symbol string) (string, error)
 	TokensWithdrawn(symbol string) (string, error)
 }

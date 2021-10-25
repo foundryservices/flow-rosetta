@@ -145,10 +145,20 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 	for _, symbol := range symbols {
 
 		// We generate the script to get the vault balance and execute it.
-		script, err := r.generate.GetBalance(symbol)
+
+		var script []byte
+		var err error
+
+		if address == r.params.StakingTable {
+			script, err = r.generate.GetStakedBalance(symbol)
+		} else {
+			script, err = r.generate.GetBalance(symbol)
+		}
+
 		if err != nil {
 			return identifier.Block{}, nil, fmt.Errorf("could not generate script: %w", err)
 		}
+
 		params := []cadence.Value{cadence.NewAddress(address)}
 		result, err := r.invoke.Script(height, script, params)
 		if err != nil && !strings.Contains(err.Error(), missingVault) {
