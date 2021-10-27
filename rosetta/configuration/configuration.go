@@ -17,7 +17,7 @@ package configuration
 import (
 	"github.com/onflow/flow-go/model/flow"
 
-	"github.com/dapperlabs/flow-dps/models/dps"
+	"github.com/optakt/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/rosetta/failure"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
 	"github.com/optakt/flow-rosetta/rosetta/meta"

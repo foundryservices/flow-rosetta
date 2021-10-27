@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/dapperlabs/flow-dps/models/dps"
+	"github.com/optakt/flow-dps/models/dps"
 )
 
 // Generator dynamically generates Cadence scripts from templates.

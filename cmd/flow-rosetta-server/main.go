@@ -33,10 +33,10 @@ import (
 
 	"github.com/onflow/flow-go-sdk/client"
 
-	api "github.com/dapperlabs/flow-dps/api/dps"
-	"github.com/dapperlabs/flow-dps/codec/zbor"
-	"github.com/dapperlabs/flow-dps/models/dps"
-	"github.com/dapperlabs/flow-dps/service/invoker"
+	api "github.com/optakt/flow-dps/api/dps"
+	"github.com/optakt/flow-dps/codec/zbor"
+	"github.com/optakt/flow-dps/models/dps"
+	"github.com/optakt/flow-dps/service/invoker"
 	"github.com/optakt/flow-rosetta/api/rosetta"
 	"github.com/optakt/flow-rosetta/rosetta/configuration"
 	"github.com/optakt/flow-rosetta/rosetta/converter"

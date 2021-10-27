@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/dapperlabs/flow-dps/models/convert"
+	"github.com/optakt/flow-dps/models/convert"
 	"github.com/optakt/flow-rosetta/testing/mocks"
 )
 
