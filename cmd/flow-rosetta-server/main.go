@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -155,7 +154,7 @@ wait:
 	config := configuration.New(params.ChainID)
 	validate := validator.New(params, index, config)
 	generate := scripts.NewGenerator(params)
-	invoke, err := invoker.New(index, invoker.WithCacheSize(flagCache), invoker.WithGasLimit(math.MaxUint64))
+	invoke, err := invoker.New(index, invoker.WithCacheSize(flagCache))
 	if err != nil {
 		log.Error().Err(err).Msg("could not initialize invoker")
 		return failure
