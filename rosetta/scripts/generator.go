@@ -17,6 +17,7 @@ package scripts
 import (
 	"bytes"
 	"fmt"
+	"github.com/onflow/flow-go/model/flow"
 	"text/template"
 
 	"github.com/dapperlabs/flow-dps/models/dps"
@@ -30,10 +31,12 @@ type Generator struct {
 	transferTokens   *template.Template
 	tokensDeposited  *template.Template
 	tokensWithdrawn  *template.Template
+	custom           map[flow.ChainID]map[flow.Address]*template.Template
 }
 
 // NewGenerator returns a Generator using the given parameters.
 func NewGenerator(params dps.Params) *Generator {
+
 	g := Generator{
 		params:           params,
 		getBalance:       template.Must(template.New("get_balance").Parse(getBalance)),
@@ -42,6 +45,14 @@ func NewGenerator(params dps.Params) *Generator {
 		tokensDeposited:  template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
 		tokensWithdrawn:  template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
 	}
+
+	var mainnetCustom = make(map[flow.Address]*template.Template)
+
+	for address, contract := range mainnetContracts {
+		mainnetCustom[flow.HexToAddress(address)] = template.Must(template.New(fmt.Sprintf("mainnet_%s", address)).Parse(contract))
+	}
+	g.custom[flow.Mainnet] = mainnetCustom
+
 	return &g
 }
 
@@ -68,6 +79,23 @@ func (g *Generator) TokensDeposited(symbol string) (string, error) {
 // TokensWithdrawn generates a Cadence script that matches the Flow event for tokens being withdrawn.
 func (g *Generator) TokensWithdrawn(symbol string) (string, error) {
 	return g.string(g.tokensWithdrawn, symbol)
+}
+
+func (g *Generator) Custom(symbol string, chainID flow.ChainID, address flow.Address) (bool, []byte, error) {
+
+	var has bool
+
+	chainCustom, has := g.custom[chainID]
+	if !has {
+		return false, nil, nil
+	}
+	template, has := chainCustom[address]
+	if !has {
+		return false, nil, nil
+	}
+
+	bytes, err := g.bytes(template, symbol)
+	return true, bytes, err
 }
 
 func (g *Generator) string(template *template.Template, symbol string) (string, error) {

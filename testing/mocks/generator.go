@@ -14,7 +14,10 @@
 
 package mocks
 
-import "testing"
+import (
+	"github.com/onflow/flow-go/model/flow"
+	"testing"
+)
 
 type Generator struct {
 	GetBalanceFunc       func(symbol string) ([]byte, error)
@@ -66,4 +69,8 @@ func (g *Generator) TokensWithdrawn(symbol string) (string, error) {
 
 func (g *Generator) TransferTokens(symbol string) ([]byte, error) {
 	return g.TransferTokensFunc(symbol)
+}
+
+func (g *Generator) Custom(symbol string, chainID flow.ChainID, address flow.Address) (bool, []byte, error) {
+	return false, nil, nil
 }

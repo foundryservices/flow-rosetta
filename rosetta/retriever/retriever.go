@@ -151,6 +151,10 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 
 		if address == r.params.StakingTable {
 			script, err = r.generate.GetStakedBalance(symbol)
+		} else if has, s, e := r.generate.Custom(symbol, r.params.ChainID, address); has {
+			// custom overrides
+			script = s
+			err = e
 		} else {
 			script, err = r.generate.GetBalance(symbol)
 		}
