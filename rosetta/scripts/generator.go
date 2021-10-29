@@ -44,6 +44,7 @@ func NewGenerator(params dps.Params) *Generator {
 		transferTokens:   template.Must(template.New("transfer_tokens").Parse(transferTokens)),
 		tokensDeposited:  template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
 		tokensWithdrawn:  template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
+		custom:           map[flow.ChainID]map[flow.Address]*template.Template{},
 	}
 
 	var mainnetCustom = make(map[flow.Address]*template.Template)
