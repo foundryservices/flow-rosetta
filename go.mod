@@ -3,7 +3,7 @@ module github.com/optakt/flow-rosetta
 go 1.17
 
 require (
-	github.com/dapperlabs/flow-dps v1.3.4-0.20211101190700-24fbf05f3f90
+	github.com/dapperlabs/flow-dps v1.3.4-0.20211107194907-018580f2c05e
 	github.com/dgraph-io/badger/v2 v2.2007.4
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/klauspost/compress v1.13.5

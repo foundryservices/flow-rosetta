@@ -194,6 +194,8 @@ github.com/dapperlabs/flow-dps v1.3.4-0.20211028124905-cead9c05a3ff h1:5vtMv6m47
 github.com/dapperlabs/flow-dps v1.3.4-0.20211028124905-cead9c05a3ff/go.mod h1:W9xLb8Tc44NSesZY04CQ1ZgXO1tz04QylGNWhkbFABQ=
 github.com/dapperlabs/flow-dps v1.3.4-0.20211101190700-24fbf05f3f90 h1:vOmqlhHL4sJ5vg06bAgaSd3sLF0LSfWwkmk5VhSwbcE=
 github.com/dapperlabs/flow-dps v1.3.4-0.20211101190700-24fbf05f3f90/go.mod h1:W9xLb8Tc44NSesZY04CQ1ZgXO1tz04QylGNWhkbFABQ=
+github.com/dapperlabs/flow-dps v1.3.4-0.20211107194907-018580f2c05e h1:bGb/D821HaTtLp6ZEk/XNjcJQhqWZU059VmYRa43XzA=
+github.com/dapperlabs/flow-dps v1.3.4-0.20211107194907-018580f2c05e/go.mod h1:W9xLb8Tc44NSesZY04CQ1ZgXO1tz04QylGNWhkbFABQ=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
