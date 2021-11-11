@@ -201,7 +201,8 @@ wait:
 	server.POST("/network/list", dataCtrl.Networks)
 	server.POST("/network/options", dataCtrl.Options)
 	server.POST("/network/status", dataCtrl.Status)
-	server.POST("/account/balance", dataCtrl.Balance)
+	//server.POST("/account/balance", dataCtrl.Balance)
+	server.POST("/account/balance", dataCtrl.Balance2)
 	server.POST("/block", dataCtrl.Block)
 	server.POST("/block/transaction", dataCtrl.Transaction)
 

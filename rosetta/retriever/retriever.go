@@ -192,6 +192,108 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 	return rosettaBlockID(height, blockID), amounts, nil
 }
 
+// Balances retrieves the balances for the given currencies of the given account ID at the given block.
+func (r *Retriever) Balances2(rosBlockID identifier.Block, rosAccountID identifier.Account, rosCurrencies []identifier.Currency) (identifier.Block, []object.Amount, error) {
+
+	// Run validation on the Rosetta block identifier. If it is valid, this will
+	// return the associated Flow block height and block ID.
+	height, blockID, err := r.validate.Block(rosBlockID)
+	if err != nil {
+		return identifier.Block{}, nil, fmt.Errorf("could not validate block: %w", err)
+	}
+
+	// Run validation on the account qualifier. If it is valid, this will return
+	// the associated Flow account address.
+	address, err := r.validate.Account(rosAccountID)
+	if err != nil {
+		return identifier.Block{}, nil, fmt.Errorf("could not validate account: %w", err)
+	}
+
+	// Run validation on the currency qualifiers. For each valid currency, this
+	// will return the associated currency symbol and number of decimals.
+	symbols := make([]string, 0, len(rosCurrencies))
+	decimals := make(map[string]uint, len(rosCurrencies))
+	for _, currency := range rosCurrencies {
+		symbol, decimal, err := r.validate.Currency(currency)
+		if err != nil {
+			return identifier.Block{}, nil, fmt.Errorf("could not validate currency: %w", err)
+		}
+		symbols = append(symbols, symbol)
+		decimals[symbol] = decimal
+	}
+
+	// Get the Cadence value that is the result of the script execution.
+	amounts := make([]object.Amount, 0, len(symbols))
+	for _, symbol := range symbols {
+
+		// We generate the script to get the vault balance and execute it.
+
+		//var script []byte
+		var err error
+
+		flowRegisters, err := r.index.FlowRegisters(address, height)
+
+		if err != nil {
+			return identifier.Block{}, nil, fmt.Errorf("could not query flow registers: %w", err)
+		}
+
+		balance := uint64(0)
+
+		for _, b := range flowRegisters {
+			balance += b
+		}
+
+		////regID := flow.NewRegisterID(owner, controller, key)
+		////path, err := pathfinder.KeyToPath(state.RegisterIDToKey(regID), complete.DefaultPathFinderVersion)
+		////if err != nil {
+		////	return identifier.Block{}, nil, fmt.Errorf("could not convert key to path: %w", err)
+		////}
+		//
+		////r.index.Values(height, []ledger.Path{path})
+		//
+		//if address == r.params.StakingTable {
+		//	script, err = r.generate.GetStakedBalance(symbol)
+		//} else if has, s, e := r.generate.Custom(symbol, r.params.ChainID, address); has {
+		//	// custom overrides
+		//	script = s
+		//	err = e
+		//} else {
+		//	script, err = r.generate.GetBalance(symbol)
+		//}
+		//
+		//if err != nil {
+		//	return identifier.Block{}, nil, fmt.Errorf("could not generate script: %w", err)
+		//}
+		//
+		//params := []cadence.Value{cadence.NewAddress(address)}
+		//result, err := r.invoke.Script(height, script, params)
+		//if err != nil && !strings.Contains(err.Error(), missingVault) {
+		//	return identifier.Block{}, nil, fmt.Errorf("could not invoke script: %w", err)
+		//}
+		//
+		//// In the previous error check, we exclude errors that are about getting
+		//// the vault reference in Cadence. In those cases, we keep the default
+		//// balance here, which is zero.
+		//balance := uint64(0)
+		//if err == nil {
+		//	var ok bool
+		//	balance, ok = result.ToGoValue().(uint64)
+		//	if !ok {
+		//		return identifier.Block{}, nil, fmt.Errorf("unexpected script result type (got: %s, want uint64)", result.String())
+		//	}
+		//}
+
+		amount := object.Amount{
+			Currency: rosettaCurrency(symbol, decimals[symbol]),
+			Value:    strconv.FormatUint(balance, 10),
+		}
+
+		amounts = append(amounts, amount)
+	}
+
+	return rosettaBlockID(height, blockID), amounts, nil
+}
+
 // Block retrieves a block and its transactions given its identifier.
 func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identifier.Transaction, error) {
 

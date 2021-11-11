@@ -48,3 +48,31 @@ func (d *Data) Balance(ctx echo.Context) error {
 
 	return ctx.JSON(statusOK, res)
 }
+
+// Balance implements the /account/balance endpoint of the Rosetta Data API.
+// See https://www.rosetta-api.org/docs/AccountApi.html#accountbalance
+func (d *Data) Balance2(ctx echo.Context) error {
+
+	var req request.Balance
+	err := ctx.Bind(&req)
+	if err != nil {
+		return unpackError(err)
+	}
+
+	err = d.validate.Request(req)
+	if err != nil {
+		return formatError(err)
+	}
+
+	rosBlockID, balances, err := d.retrieve.Balances2(req.BlockID, req.AccountID, req.Currencies)
+	if err != nil {
+		return apiError(balancesRetrieval, err)
+	}
+
+	res := response.Balance{
+		BlockID:  rosBlockID,
+		Balances: balances,
+	}
+
+	return ctx.JSON(statusOK, res)
+}
