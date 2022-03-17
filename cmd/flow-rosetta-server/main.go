@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
 	"github.com/spf13/pflag"
 	"github.com/ziflex/lecho/v2"
@@ -69,6 +70,8 @@ func run() int {
 		flagPort         uint16
 		flagTransactions uint
 		flagSmart        bool
+		flagWait         bool
+		flagDump         bool
 	)
 
 	pflag.StringVarP(&flagDPS, "dps-api", "a", "127.0.0.1:5005", "host address for GRPC API endpoint")
@@ -78,6 +81,8 @@ func run() int {
 	pflag.Uint16VarP(&flagPort, "port", "p", 8080, "port to host Rosetta API on")
 	pflag.UintVarP(&flagTransactions, "transaction-limit", "t", 200, "maximum amount of transactions to include in a block response")
 	pflag.BoolVar(&flagSmart, "smart-status-codes", false, "enable smart non-500 HTTP status codes for Rosetta API errors")
+	pflag.BoolVar(&flagDump, "dump-requests", false, "print out full request and responses")
+	pflag.BoolVarP(&flagWait, "wait-for-index", "w", false, "wait for index to be available instead of quitting right away, useful when DPS Live index bootstraps")
 
 	pflag.Parse()
 
@@ -105,10 +110,15 @@ func run() int {
 	dpsAPI := api.NewAPIClient(conn)
 	index := api.IndexFromAPI(dpsAPI, codec)
 
+wait:
 	// Deduce chain ID from DPS API to configure parameters for script exec.
 	first, err := index.First()
 	if err != nil {
 		log.Error().Err(err).Msg("could not get first height from DPS API")
+		if flagWait {
+			time.Sleep(30 * time.Second)
+			goto wait
+		}
 		return failure
 	}
 	root, err := index.Header(first)
@@ -169,7 +179,22 @@ func run() int {
 	server.HideBanner = true
 	server.HidePort = true
 	server.Logger = elog
-	server.Use(lecho.Middleware(lecho.Config{Logger: elog}))
+
+	logger := lecho.Middleware(lecho.Config{Logger: elog})
+
+	if flagDump {
+		logger = middleware.BodyDump(func(c echo.Context, request []byte, response []byte) {
+			fmt.Printf("<<<< %s %s\n%s>>>> %d\n%s\n",
+				c.Request().Method,
+				c.Request().RequestURI,
+				string(request),
+				c.Response().Status,
+				string(response),
+			)
+		})
+	}
+
+	server.Use(logger)
 
 	// This group contains all of the Rosetta Data API endpoints.
 	server.POST("/network/list", dataCtrl.Networks)
