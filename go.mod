@@ -10,8 +10,8 @@ require (
 	github.com/onflow/cadence v0.19.1
 	github.com/onflow/flow-go v0.21.2
 	github.com/onflow/flow-go-sdk v0.21.0
-	github.com/onflow/flow-go/crypto v0.21.2
-	github.com/optakt/flow-dps v1.3.3
+	github.com/onflow/flow-go/crypto v0.21.4
+	github.com/optakt/flow-dps v1.4.8
 	github.com/rs/zerolog v1.25.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0

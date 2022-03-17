@@ -3,3 +3,4 @@
 *.checkpoint
 *.log
 flow-go/
+.vscode/
