@@ -4,3 +4,4 @@
 *.log
 flow-go/
 .vscode/
+__debug_bin

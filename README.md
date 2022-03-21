@@ -21,7 +21,7 @@ Please note that the flow-go repository should be cloned into this projects dire
 
 * `git clone git@github.com:onflow/flow-go.git`
 * `cd flow-go/crypto`
-* `git checkout v0.21.4`
+* `git checkout v0.25.0`
 * `go generate`
 
 You can then verify that the installation of the flow-go crypto package has been successful by running the tests of the project.
