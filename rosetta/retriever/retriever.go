@@ -310,6 +310,7 @@ func (r *Retriever) Transaction(rosBlockID identifier.Block, rosTxID identifier.
 	if err != nil {
 		return nil, fmt.Errorf("could not generate withdrawal event type: %w", err)
 	}
+	// TODO Retrieve A.8624b52f9ddcd04a.FlowIDTableStaking DelegatorRewardsPaid
 
 	// Retrieve the deposit and withdrawal events for the block (yes, all of them).
 	events, err := r.index.Events(height, flow.EventType(deposit), flow.EventType(withdrawal))

@@ -80,9 +80,7 @@ func setupDB(t *testing.T) *badger.DB {
 
 	reader := hex.NewDecoder(strings.NewReader(snapshots.Rosetta))
 
-	decompressor, err := zstd.NewReader(reader,
-		zstd.WithDecoderDicts(zbor.Dictionary),
-	)
+	decompressor, err := zstd.NewReader(reader)
 	require.NoError(t, err)
 
 	err = db.Load(decompressor, runtime.GOMAXPROCS(0))

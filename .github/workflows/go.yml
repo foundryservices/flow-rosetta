@@ -1,20 +1,40 @@
-name: CI
+name: Go CI/CD
 
-# Continuous integration will run whenever a pull request for the master branch
-# is created or updated.
 on:
-  workflow_dispatch:
-  pull_request:
+  push:
     branches:
-      - master
+      - '**'
+
+env:
+  GO_VERSION: 1.17
 
 jobs:
-  check:
+  format:
+    name: Format
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out source code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+
+    - name: Format
+      run: go fmt -l -d ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        args: -v -E golint,misspell,gocyclo,gocritic,whitespace,goconst,bodyclose,unconvert,lll
+        version: v1.29 
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:  
+      - uses: actions/checkout@v2
 
       - name: Check out FlowGo
         uses: actions/checkout@v2
@@ -23,10 +43,10 @@ jobs:
           ref: c0afa789365eb7a22713ed76b8de1e3efaf3a70a
           path: flow-go
 
-      - name: Install Go
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
         uses: actions/cache@v2
@@ -35,11 +55,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      # Here, we simply print the exact go version, to have it as part of the
-      # action's output, which might be convenient.
-      - name: Print Go version
-        run: go version
 
       # The protobuf steps uses the official instructions to install the
       # pre-compiled binary, see:
@@ -60,7 +75,6 @@ jobs:
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
           go install github.com/srikrsna/protoc-gen-gotag@v0.6.1
 
-      # Since building relic takes some time, we want to cache it.
       - name: Cache Crypto package
         uses: actions/cache@v2
         with:
@@ -69,8 +83,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-crypto
 
-      # In order to be able to build with flow-go and the relic tag, we need to
-      # run its go generate target.
       - name: Install Flow Go's crypto
         run: |
           cd ./flow-go/crypto
@@ -86,22 +98,56 @@ jobs:
       - name: Verify generated files
         run: go generate ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
-      # This check makes sure that the source code is formatted according to the
-      # Go standard `go fmt` formatting.
-      - name: Verify source code formatting
-        run: go fmt ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
-
       # This check makes sure that we can compile the binary as a pure Go binary
       # without CGO support.
       - name: Verify compilation
         run: go build -tags relic ./...
 
-      # This check runs all unit tests with verbose output and ensures that all
-      # of the tests pass successfully.
-      - name: Verify unit tests
-        run: go test -tags relic -v ./...
+  test:
+    name: Test/Coverage
+    needs: [ format, lint, build ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
 
-      # This check runs all integration tests with verbose output and ensures
-      # that they pass successfully.
-      - name: Verify integration tests
-        run: go test -v -tags="relic integration" ./...
+    - name: Check out FlowGo
+      uses: actions/checkout@v2
+      with:
+        repository: onflow/flow-go
+        ref: c0afa789365eb7a22713ed76b8de1e3efaf3a70a
+        path: flow-go
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GO_VERSION }}
+  
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Cache Crypto package
+      uses: actions/cache@v2
+      with:
+        path: ./flow-go/crypto
+        key: ${{ runner.os }}-crypto
+        restore-keys: |
+          ${{ runner.os }}-crypto
+        
+    - name: Install Flow Go's crypto
+      run: |
+        cd ./flow-go/crypto
+        go generate .
+
+    - name: Check Coverage
+      run: make coverage
+
+    - name: Upload Coverage HTMl artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: ./coverage/coverage.html

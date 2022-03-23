@@ -17,12 +17,14 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ziflex/lecho/v2 v2.5.1
 	golang.org/x/mod v0.5.0
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 )
 
 require (
-	cloud.google.com/go v0.99.0 // indirect
-	cloud.google.com/go/storage v1.16.1 // indirect
+	cloud.google.com/go v0.100.2 // indirect
+	cloud.google.com/go/compute v1.2.0 // indirect
+	cloud.google.com/go/iam v0.1.1 // indirect
+	cloud.google.com/go/storage v1.21.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.9.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.5.1 // indirect
@@ -33,18 +35,13 @@ require (
 	github.com/aws/smithy-go v1.8.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
-	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
-	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/ef-ds/deque v1.0.4 // indirect
-	github.com/envoyproxy/go-control-plane v0.10.1 // indirect
-	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
 	github.com/ethereum/go-ethereum v1.9.13 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.3.1-0.20211029162100-5d5d7c3edd41 // indirect
@@ -61,7 +58,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -136,16 +133,16 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa // indirect
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/api v0.63.0 // indirect
+	google.golang.org/api v0.69.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	google.golang.org/genproto v0.0.0-20220216160803-4663080d8bc8 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -153,4 +150,4 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-replace github.com/onflow/flow-go/crypto => ./flow-go/crypto
+replace github.com/onflow/flow-go/crypto => ../flow-go/crypto

@@ -5,3 +5,7 @@
 flow-go/
 .vscode/
 __debug_bin
+rosetta/scripts/examples/out
+c.out
+flow.json
+coverage/

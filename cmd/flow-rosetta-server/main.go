@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/ziflex/lecho/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-go-sdk/client"
 
@@ -101,7 +102,7 @@ func run() int {
 	codec := zbor.NewCodec()
 
 	// Initialize the DPS API client and wrap it for easy usage.
-	conn, err := grpc.Dial(flagDPS, grpc.WithInsecure())
+	conn, err := grpc.Dial(flagDPS, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Error().Str("api", flagDPS).Err(err).Msg("could not dial API host")
 		return failure
@@ -137,7 +138,8 @@ wait:
 		log.Error().Msg("Flow Access API endpoint is missing")
 		return failure
 	}
-	accessAPI, err := client.New(flagAccess, grpc.WithInsecure())
+	accessAPI, err := client.New(flagAccess, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
 	if err != nil {
 		log.Error().Str("address", flagAccess).Err(err).Msg("could not dial Flow Access API address")
 		return failure
