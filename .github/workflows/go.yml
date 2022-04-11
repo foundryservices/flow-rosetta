@@ -14,9 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
+      
+    - name: Check out FlowGo
+      uses: actions/checkout@v2
+      with:
+        repository: onflow/flow-go
+        ref: v0.25.0
+        path: flow-go
 
     - name: Format
-      run: go fmt ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+      run: |
+        cd flow-rosetta
+        go fmt ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
   lint:
     name: Lint
@@ -101,12 +112,16 @@ jobs:
       # This check makes sure that the generated protocol buffer files in Go
       # have been updated in case there was a change in the definitions.
       - name: Verify generated files
-        run: go generate ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+        run: |
+          cd flow-rosetta
+          go generate ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
       # This check makes sure that we can compile the binary as a pure Go binary
       # without CGO support.
       - name: Verify compilation
-        run: go build -tags relic ./...
+        run: |
+          cd flow-rosetta
+          go build -tags relic ./...
 
   test:
     name: Test/Coverage
@@ -114,6 +129,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
 
     - name: Check out FlowGo
       uses: actions/checkout@v2
@@ -149,10 +166,12 @@ jobs:
         go generate .
 
     - name: Check Coverage
-      run: make coverage
+      run: |
+        cd flow-rosetta
+        make coverage
 
     - name: Upload Coverage HTMl artifact
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
-        path: ./coverage/coverage.html
+        path: ./flow-rosetta/coverage/coverage.html
