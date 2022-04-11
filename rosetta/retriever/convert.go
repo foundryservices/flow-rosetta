@@ -15,6 +15,10 @@
 package retriever
 
 import (
+	"encoding/json"
+	"strconv"
+
+	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
@@ -38,4 +42,51 @@ func rosettaCurrency(symbol string, decimals uint) identifier.Currency {
 		Symbol:   symbol,
 		Decimals: decimals,
 	}
+}
+
+func valueToJsonString(value cadence.Value) string {
+    result := flatten(value)
+    json, _ := json.MarshalIndent(result, "", "    ")
+    return string(json)
+}
+
+func flatten(field cadence.Value) interface{} {
+    dictionaryValue, isDictionary := field.(cadence.Dictionary)
+    structValue, isStruct := field.(cadence.Struct)
+    arrayValue, isArray := field.(cadence.Array)
+    if isStruct {
+        subStructNames := structValue.StructType.Fields
+        result := map[string]interface{}{}
+        for j, subField := range structValue.Fields {
+            result[subStructNames[j].Identifier] = flatten(subField)
+        }
+        return result
+    } else if isDictionary {
+        result := map[string]interface{}{}
+        for _, item := range dictionaryValue.Pairs {
+            result[item.Key.String()] = flatten(item.Value)
+        }
+        return result
+    } else if isArray {
+        result := []interface{}{}
+        for _, item := range arrayValue.Values {
+            result = append(result, flatten(item))
+        }
+        return result
+    }
+    result, err := strconv.Unquote(field.String())
+    if err != nil {
+        return field.String()
+    }
+    return result
+
+}
+
+// "1.00000000" -> "100000000"
+func UFix64ToUInt64String (UFix64 string) (string, error) {
+	ufix, err := cadence.NewUFix64(UFix64)
+	if err != nil {
+		return "", err
+	}
+	return strconv.FormatUint(ufix.ToGoValue().(uint64), 10), nil
 }

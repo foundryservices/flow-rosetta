@@ -17,7 +17,7 @@ In order to build the live binary, the following extra steps and dependencies ar
 
 * [`CMake`](https://cmake.org/install/)
 
-Please note that the flow-go repository should be cloned into this projects directory with its default name, so that the Go module replace statement works as intended: `replace github.com/onflow/flow-go/crypto => ./flow-go/crypto`.
+Please note that the flow-go repository should be cloned into this projects parent directory with its default name, so that the Go module replace statement works as intended: `replace github.com/onflow/flow-go/crypto => ../flow-go/crypto`.
 
 * `git clone git@github.com:onflow/flow-go.git`
 * `cd flow-go/crypto`
@@ -48,16 +48,30 @@ The following command can be executed to validate the Data API for that spork:
 rosetta-cli check:data --configuration-file flow.json
 ```
 
+For VSCode add this to `.vscode/settings.json`
+```json
+{
+  "gopls": {
+    "env": {
+      "GOFLAGS": "-tags=relic,integration"
+    },
+  },
+}
+```
+
 ## Usage
 
 ```sh
 Usage of flow-rosetta-server:
-  -a, --api string              host URL for GRPC API endpoint (default "127.0.0.1:5005")
-  -e, --cache uint              maximum cache size for register reads in bytes (default 1073741824)
-  -l, --level string            log output level (default "info")
-  -p, --port uint16             port to host Rosetta API on (default 8080)
-  -t, --transaction-limit int   maximum amount of transactions to include in a block response (default 200)
-      --smart-status-codes      enable smart non-500 HTTP status codes for Rosetta API errors
+  -c, --access-api string        host address for Flow network\'s Access API endpoint (default "access.mainnet.nodes.onflow.org:9000")
+  -e, --cache uint               maximum cache size for register reads in bytes (default 1000000000)
+  -a, --dps-api string           host address for GRPC API endpoint (default "127.0.0.1:5005")
+      --dump-requests            print out full request and responses
+  -l, --level string             log output level (default "info")
+  -p, --port uint16              port to host Rosetta API on (default 8080)
+      --smart-status-codes       enable smart non-500 HTTP status codes for Rosetta API errors
+  -t, --transaction-limit uint   maximum amount of transactions to include in a block response (default 200)
+  -w, --wait-for-index           wait for index to be available instead of quitting right away, useful when DPS Live index bootstraps
 ```
 
 ## Example
@@ -67,6 +81,14 @@ It uses a local instance of the Flow DPS Server for access to the execution stat
 
 ```sh
 ./flow-rosetta-server -a "127.0.0.1:5005" -p 8080
+```
+
+## Running without DPS Example
+
+Some features can be used without the dps so you only need an access node for the mainnet you wish to run. Mainnet 16 example:
+
+```sh
+./flow-rosetta-server -c "access-001.mainnet16.nodes.onflow.org:9000" -p 8080
 ```
 
 ## Architecture

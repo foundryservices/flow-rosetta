@@ -32,6 +32,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-go-sdk/client"
+	"github.com/onflow/flow-go/model/flow"
 
 	api "github.com/optakt/flow-dps/api/dps"
 	"github.com/optakt/flow-dps/codec/zbor"
@@ -42,8 +43,8 @@ import (
 	"github.com/optakt/flow-rosetta/rosetta/converter"
 	"github.com/optakt/flow-rosetta/rosetta/retriever"
 	"github.com/optakt/flow-rosetta/rosetta/scripts"
-	"github.com/optakt/flow-rosetta/rosetta/submitter"
-	"github.com/optakt/flow-rosetta/rosetta/transactor"
+	//"github.com/optakt/flow-rosetta/rosetta/submitter"
+	//"github.com/optakt/flow-rosetta/rosetta/transactor"
 	"github.com/optakt/flow-rosetta/rosetta/validator"
 )
 
@@ -76,7 +77,7 @@ func run() int {
 	)
 
 	pflag.StringVarP(&flagDPS, "dps-api", "a", "127.0.0.1:5005", "host address for GRPC API endpoint")
-	pflag.StringVarP(&flagAccess, "access-api", "c", "access.canary.nodes.onflow.org:9000", "host address for Flow network's Access API endpoint")
+	pflag.StringVarP(&flagAccess, "access-api", "c", "access.mainnet.nodes.onflow.org:9000", "host address for Flow network's Access API endpoint")
 	pflag.Uint64VarP(&flagCache, "cache", "e", 1_000_000_000, "maximum cache size for register reads in bytes")
 	pflag.StringVarP(&flagLevel, "level", "l", "info", "log output level")
 	pflag.Uint16VarP(&flagPort, "port", "p", 8080, "port to host Rosetta API on")
@@ -111,8 +112,12 @@ func run() int {
 	dpsAPI := api.NewAPIClient(conn)
 	index := api.IndexFromAPI(dpsAPI, codec)
 
-wait:
+// FIXME
+// wait:
 	// Deduce chain ID from DPS API to configure parameters for script exec.
+
+	var first uint64 = 27341470
+	/** FIXME
 	first, err := index.First()
 	if err != nil {
 		log.Error().Err(err).Msg("could not get first height from DPS API")
@@ -122,14 +127,19 @@ wait:
 		}
 		return failure
 	}
+	
 	root, err := index.Header(first)
+	**/
+	
 	if err != nil {
 		log.Error().Uint64("first", first).Err(err).Msg("could not get root header from DPS API")
 		return failure
 	}
-	params, ok := dps.FlowParams[root.ChainID]
+
+	params, ok := dps.FlowParams[flow.Mainnet] // params, ok := dps.FlowParams[root.ChainID]
 	if !ok {
-		log.Error().Str("chain", root.ChainID.String()).Msg("invalid chain ID for params")
+		// log.Error().Str("chain", root.ChainID.String()).Msg("invalid chain ID for params")
+		log.Error().Str("chain", flow.Mainnet.String()).Msg("invalid chain ID for params")
 		return failure
 	}
 
@@ -154,7 +164,7 @@ wait:
 
 	// Rosetta API initialization.
 	config := configuration.New(params.ChainID)
-	validate := validator.New(params, index, config)
+	validate := validator.New(params, index, accessAPI, config)
 	generate := scripts.NewGenerator(params)
 	invoke, err := invoker.New(index, invoker.WithCacheSize(flagCache))
 	if err != nil {
@@ -168,14 +178,14 @@ wait:
 		return failure
 	}
 
-	retrieve := retriever.New(params, index, validate, generate, invoke, convert,
+	retrieve := retriever.New(params, index, accessAPI, validate, generate, invoke, convert,
 		retriever.WithTransactionLimit(flagTransactions),
 	)
 	dataCtrl := rosetta.NewData(config, retrieve, validate)
 
-	submit := submitter.New(accessAPI)
-	transact := transactor.New(validate, generate, invoke, submit)
-	constructCtrl := rosetta.NewConstruction(config, transact, retrieve, validate)
+	//submit := submitter.New(accessAPI)
+	//transact := transactor.New(validate, generate, invoke, submit)
+	//constructCtrl := rosetta.NewConstruction(config, transact, retrieve, validate)
 
 	server := echo.New()
 	server.HideBanner = true
@@ -207,13 +217,13 @@ wait:
 	server.POST("/block/transaction", dataCtrl.Transaction)
 
 	// This group contains all of the Rosetta Construction API endpoints.
-	server.POST("/construction/preprocess", constructCtrl.Preprocess)
-	server.POST("/construction/metadata", constructCtrl.Metadata)
-	server.POST("/construction/payloads", constructCtrl.Payloads)
-	server.POST("/construction/parse", constructCtrl.Parse)
-	server.POST("/construction/combine", constructCtrl.Combine)
-	server.POST("/construction/hash", constructCtrl.Hash)
-	server.POST("/construction/submit", constructCtrl.Submit)
+	// server.POST("/construction/preprocess", constructCtrl.Preprocess)
+	// server.POST("/construction/metadata", constructCtrl.Metadata)
+	// server.POST("/construction/payloads", constructCtrl.Payloads)
+	// server.POST("/construction/parse", constructCtrl.Parse)
+	// server.POST("/construction/combine", constructCtrl.Combine)
+	// server.POST("/construction/hash", constructCtrl.Hash)
+	// server.POST("/construction/submit", constructCtrl.Submit)
 
 	// This section launches the main executing components in their own
 	// goroutine, so they can run concurrently. Afterwards, we wait for an

@@ -23,6 +23,7 @@ import (
 	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/optakt/flow-dps/models/dps"
+	"github.com/optakt/flow-rosetta/rosetta/configuration"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
 	"github.com/optakt/flow-rosetta/rosetta/object"
 	"github.com/optakt/flow-rosetta/rosetta/retriever"
@@ -30,8 +31,9 @@ import (
 
 // Converter converts Flow Events into Rosetta Operations.
 type Converter struct {
-	deposit    flow.EventType
-	withdrawal flow.EventType
+	deposit     flow.EventType
+	withdrawal  flow.EventType
+	rewardsPaid flow.EventType
 }
 
 // New instantiates and returns a new converter using the given Generator.
@@ -44,10 +46,15 @@ func New(gen Generator) (*Converter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not generate withdrawal event type: %w", err)
 	}
+	rewardsPaid, err := gen.DelegatorRewardsPaid(dps.FlowSymbol)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate rewards paid event type: %w", err)
+	}
 
 	c := Converter{
 		deposit:    flow.EventType(deposit),
 		withdrawal: flow.EventType(withdrawal),
+		rewardsPaid: flow.EventType(rewardsPaid),
 	}
 
 	return &c, nil
@@ -67,45 +74,70 @@ func (c *Converter) EventToOperation(event flow.Event) (operation *object.Operat
 	}
 
 	// Ensure that there are the correct amount of fields.
-	if len(e.Fields) != 2 {
-		return nil, fmt.Errorf("invalid number of fields (want: %d, have: %d)", 2, len(e.Fields))
+	if len(e.Fields) < 2 || len(e.Fields) > 3 {
+		return nil, fmt.Errorf("invalid number of fields (want: 2-3, have: %d)", len(e.Fields))
 	}
 
 	// The first field is always the amount and the second one the address.
 	// The types coming from Cadence are not native Flow types, so primitive types
 	// are needed before they can be converted into proper Flow types.
-	vAmount := e.Fields[0].ToGoValue()
-	uAmount, ok := vAmount.(uint64)
-	if !ok {
-		return nil, fmt.Errorf("could not cast amount (%T)", vAmount)
+	var uAmount uint64
+	var address string
+	var subAddress string
+	if len(e.Fields) == 2 {
+		vAmount := e.Fields[0].ToGoValue()
+		uAmount, ok = vAmount.(uint64)
+		if !ok {
+			return nil, fmt.Errorf("could not cast amount (%T)", vAmount)
+		}
+
+		vAddress := e.Fields[1].ToGoValue()
+
+		// Sometimes an event is not associated with an account. Ignore these events
+		// as they refer to intermediary vaults.
+		if vAddress == nil {
+			return nil, retriever.ErrNoAddress
+		}
+
+		bAddress, ok := vAddress.([flow.AddressLength]byte)
+		if !ok {
+			return nil, fmt.Errorf("could not cast address (%T)", vAddress)
+		}
+
+		// Convert the address bytes into a native Flow address.
+		address = flow.Address(bAddress).String()
+
+		subAddress = ""
 	}
 
-	vAddress := e.Fields[1].ToGoValue()
+	if len(e.Fields) == 3 {
+		vAmount := e.Fields[2].ToGoValue()
+		uAmount, ok = vAmount.(uint64)
+		if !ok {
+			return nil, fmt.Errorf("could not cast amount (%T)", vAmount)
+		}
 
-	// Sometimes an event is not associated with an account. Ignore these events
-	// as they refer to intermediary vaults.
-	if vAddress == nil {
-		return nil, retriever.ErrNoAddress
-	}
+		// Validator ID
+		address = e.Fields[0].ToGoValue().(string)
 
-	bAddress, ok := vAddress.([flow.AddressLength]byte)
-	if !ok {
-		return nil, fmt.Errorf("could not cast address (%T)", vAddress)
+		// Delegator ID
+		subAddress = e.Fields[1].String()
 	}
 
 	// Convert the amount to a signed integer that it can be inverted.
 	amount := int64(uAmount)
-	// Convert the address bytes into a native Flow address.
-	address := flow.Address(bAddress)
 
 	netIndex := uint(event.EventIndex)
 	op := object.Operation{
 		ID: identifier.Operation{
 			NetworkIndex: &netIndex,
 		},
-		Status: dps.StatusCompleted,
+		Status: configuration.StatusSuccess,
 		AccountID: identifier.Account{
-			Address: address.String(),
+			Address: address,
+			SubAccount: identifier.SubAccount{
+				Address: subAddress,
+			},
 		},
 	}
 
@@ -117,6 +149,8 @@ func (c *Converter) EventToOperation(event flow.Event) (operation *object.Operat
 	case c.withdrawal:
 		op.Type = dps.OperationTransfer
 		amount = -amount
+	case c.rewardsPaid:
+		op.Type = configuration.OperationDelegatorReward
 	default:
 		return nil, retriever.ErrNotSupported
 	}

@@ -56,6 +56,7 @@ func New(chain flow.ChainID) *Configuration {
 
 	operations := []string{
 		OperationTransfer,
+		OperationDelegatorReward,
 	}
 
 	errors := []meta.ErrorDefinition{
