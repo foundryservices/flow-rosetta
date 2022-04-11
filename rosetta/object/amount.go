@@ -22,4 +22,10 @@ import (
 type Amount struct {
 	Value    string              `json:"value"`
 	Currency identifier.Currency `json:"currency"`
+
+	// Foundry Rosetta Fork: The total delegated portion of the Value on a validator. Null if account is not a validator.
+	DelegatedValue string `json:"delegated_value,omitempty"`
+	// Foundry Rosetta Fork: A list of delegators for a given validator and the value delegated. Null if account is not a
+	// validator.
+	Delegators []*Delegator `json:"delegators,omitempty"`
 }

@@ -14,10 +14,15 @@
 
 package retriever
 
+import "github.com/onflow/flow-go/model/flow"
+
 // Generator represents something that can generate scripts for retrieving
 // balances as well as the amounts deposited and withdrawn for a given token.
 type Generator interface {
 	GetBalance(symbol string) ([]byte, error)
+	GetStakedBalance(symbol string) ([]byte, error)
 	TokensDeposited(symbol string) (string, error)
 	TokensWithdrawn(symbol string) (string, error)
+	DelegatorRewardsPaid(symbol string) (string, error)
+	Custom(symbol string, chainID flow.ChainID, address flow.Address) (bool, []byte, error)
 }

@@ -4,7 +4,7 @@ LINT_SETTINGS=golint,misspell,gocyclo,gocritic,whitespace,goconst,bodyclose,unco
 all: lint format build
 
 format:
-	gofmt -s -w -l .
+	gofmt -s -w .
 	goimports -w .
 
 lint:

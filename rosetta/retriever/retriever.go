@@ -15,6 +15,7 @@
 package retriever
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -22,13 +23,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go/model/flow"
+	"encoding/json"
 
+	"github.com/onflow/cadence"
+	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/model/flow"
+	"google.golang.org/grpc"
+
+	"github.com/onflow/flow-go-sdk/client"
 	"github.com/optakt/flow-dps/models/dps"
 	"github.com/optakt/flow-rosetta/rosetta/failure"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"
 	"github.com/optakt/flow-rosetta/rosetta/object"
+	"github.com/optakt/flow-rosetta/rosetta/scripts"
 )
 
 // Retriever is a component that retrieves information from the DPS index and converts it into
@@ -36,16 +43,17 @@ import (
 type Retriever struct {
 	cfg Config
 
-	params   dps.Params
-	index    dps.Reader
-	validate Validator
-	generate Generator
-	invoke   Invoker
-	convert  Converter
+	params    dps.Params
+	index     dps.Reader
+	accessAPI *client.Client
+	validate  Validator
+	generate  Generator
+	invoke    Invoker
+	convert   Converter
 }
 
 // New instantiates and returns a Retriever using the injected dependencies, as well as the provided options.
-func New(params dps.Params, index dps.Reader, validate Validator, generator Generator, invoke Invoker, convert Converter, options ...func(*Config)) *Retriever {
+func New(params dps.Params, index dps.Reader, accessAPI *client.Client, validate Validator, generator Generator, invoke Invoker, convert Converter, options ...func(*Config)) *Retriever {
 
 	cfg := Config{
 		TransactionLimit: 200,
@@ -56,13 +64,14 @@ func New(params dps.Params, index dps.Reader, validate Validator, generator Gene
 	}
 
 	r := Retriever{
-		cfg:      cfg,
-		params:   params,
-		index:    index,
-		validate: validate,
-		generate: generator,
-		invoke:   invoke,
-		convert:  convert,
+		cfg:       cfg,
+		params:    params,
+		index:     index,
+		accessAPI: accessAPI,
+		validate:  validate,
+		generate:  generator,
+		invoke:    invoke,
+		convert:   convert,
 	}
 
 	return &r
@@ -115,6 +124,8 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 
 	// Run validation on the Rosetta block identifier. If it is valid, this will
 	// return the associated Flow block height and block ID.
+
+	// FIXME: Skipping validation so we to skip DPS
 	height, blockID, err := r.validate.Block(rosBlockID)
 	if err != nil {
 		return identifier.Block{}, nil, fmt.Errorf("could not validate block: %w", err)
@@ -122,7 +133,9 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 
 	// Run validation on the account qualifier. If it is valid, this will return
 	// the associated Flow account address.
-	address, err := r.validate.Account(rosAccountID)
+
+	// TODO ignore error if they sent a validiator address
+	_, err = r.validate.Account(rosAccountID)
 	if err != nil {
 		return identifier.Block{}, nil, fmt.Errorf("could not validate account: %w", err)
 	}
@@ -149,27 +162,64 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 		if err != nil {
 			return identifier.Block{}, nil, fmt.Errorf("could not generate script: %w", err)
 		}
-		params := []cadence.Value{cadence.NewAddress(address)}
-		result, err := r.invoke.Script(height, script, params)
-		if err != nil && !strings.Contains(err.Error(), missingVault) {
-			return identifier.Block{}, nil, fmt.Errorf("could not invoke script: %w", err)
-		}
+		// params := []cadence.Value{cadence.NewAddress(address)}
+		// result, err := r.invoke.Script(height, script, params)
+		// if err != nil && !strings.Contains(err.Error(), missingVault) {
+		// 	return identifier.Block{}, nil, fmt.Errorf("could not invoke script: %w", err)
+		// }
 
 		// In the previous error check, we exclude errors that are about getting
 		// the vault reference in Cadence. In those cases, we keep the default
 		// balance here, which is zero.
 		balance := uint64(0)
-		if err == nil {
-			var ok bool
-			balance, ok = result.ToGoValue().(uint64)
-			if !ok {
-				return identifier.Block{}, nil, fmt.Errorf("unexpected script result type (got: %s, want uint64)", result.String())
-			}
+		// if err == nil {
+		// 	var ok bool
+		// 	balance, ok = result.ToGoValue().(uint64)
+		// 	if !ok {
+		// 		return identifier.Block{}, nil, fmt.Errorf("unexpected script result type (got: %s, want uint64)", result.String())
+		// 	}
+		// }
+
+		script, err = r.generate.GetStakedBalance(symbol)
+		if err != nil {
+			return identifier.Block{}, nil, fmt.Errorf("could not generate script: %w", err)
+		}
+		nodeId, _ := cadence.NewString(rosAccountID.Address)
+		params := []cadence.Value{nodeId}
+		print(string(script))
+		result, err := r.accessAPI.ExecuteScriptAtBlockHeight(context.Background(), height, script, params)
+		// result, err := r.invoke.Script(height, script, params)
+		if err != nil && !strings.Contains(err.Error(), missingVault) {
+			return identifier.Block{}, nil, fmt.Errorf("could not invoke script: %w", err)
 		}
 
+		var stakingNodeInfo scripts.StakingNodeInfo
+		err = json.Unmarshal([]byte(valueToJsonString(result)), &stakingNodeInfo)
+		if err != nil {
+			return identifier.Block{}, nil, err
+		}
+
+		delegators := []*object.Delegator{}
+		for _, delegator := range stakingNodeInfo.Delegators {
+			delegatedValue, err := UFix64ToUInt64String(delegator.TokensStaked)
+			if err != nil {
+				return identifier.Block{}, nil, err
+			}
+			delegators = append(delegators, &object.Delegator{
+				Address:        delegator.ID,
+				DelegatedValue: delegatedValue,
+			})
+		}
+
+		stakedBalance, err := UFix64ToUInt64String(stakingNodeInfo.StakedBalance)
+		if err != nil {
+			return identifier.Block{}, nil, err
+		}
 		amount := object.Amount{
-			Currency: rosettaCurrency(symbol, decimals[symbol]),
-			Value:    strconv.FormatUint(balance, 10),
+			Currency:       rosettaCurrency(symbol, decimals[symbol]),
+			Value:          strconv.FormatUint(balance, 10),
+			DelegatedValue: stakedBalance,
+			Delegators:     delegators,
 		}
 
 		amounts = append(amounts, amount)
@@ -189,6 +239,7 @@ func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identif
 	}
 
 	// Retrieve the Flow token default withdrawal and deposit events.
+	/**
 	deposit, err := r.generate.TokensDeposited(dps.FlowSymbol)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not generate deposit event type: %w", err)
@@ -197,31 +248,60 @@ func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identif
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not generate withdrawal event type: %w", err)
 	}
+	**/
+	delegatorRewardsPaid, err := r.generate.DelegatorRewardsPaid(dps.FlowSymbol)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not generate delegator rewards paid event type: %w", err)
+	}
 
 	// Then, get the header; it contains the block ID, parent ID and timestamp.
-	header, err := r.index.Header(height)
+	header, err := r.accessAPI.GetBlockHeaderByHeight(context.Background(), height)
+	// header, err := r.index.Header(height)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not get header: %w", err)
 	}
 
+	blockIDs := []sdk.Identifier{header.ID}
+
 	// Next, we get all the events for the block to extract deposit and withdrawal events.
-	events, err := r.index.Events(height, flow.EventType(deposit), flow.EventType(withdrawal))
+	// events, err := r.accessAPI.GetEventsForBlockIDs(context.Background(), deposit, blockIDs)
+	// events, err := r.accessAPI.GetEventsForBlockIDs(context.Background(), withdrawal, blockIDs)
+	blockEvents, err := r.accessAPI.GetEventsForBlockIDs(context.Background(), delegatorRewardsPaid, blockIDs, grpc.MaxCallRecvMsgSize(10000000))
+	// events, err := r.index.Events(height, flow.EventType(deposit), flow.EventType(withdrawal), flow.EventType(delegatorRewardsPaid))
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not get events: %w", err)
 	}
 
+	// Doing this conersion is unoptimal, we should just handle this type in the helper functions
+	txMap := map[flow.Identifier][]flow.Event{}
+	for _, sdkEvents := range blockEvents {
+		for _, evt := range sdkEvents.Events {
+			txMap[flow.Identifier(evt.TransactionID)] = append(txMap[flow.Identifier(evt.TransactionID)], flow.Event{
+				Type:             flow.EventType(evt.Type),
+				TransactionID:    flow.Identifier(evt.TransactionID),
+				TransactionIndex: uint32(evt.TransactionIndex),
+				EventIndex:       uint32(evt.EventIndex),
+				Payload:          evt.Payload,
+			})
+		}
+	}
+
 	// Get all transaction IDs for this height.
+	/** Need DPS for this
 	txIDs, err := r.index.TransactionsByHeight(height)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not get transactions by height: %w", err)
 	}
+	**/
 
 	// Go over all the transaction IDs and create the related Rosetta transaction
 	// until we hit the limit, at which point we just add the identifier.
 	var blockTransactions []*object.Transaction
 	var extraTransactions []identifier.Transaction
-	for index, txID := range txIDs {
-		if index >= int(r.cfg.TransactionLimit) {
+	count := 0
+	for txID, events := range txMap {
+		count++
+		if count >= int(r.cfg.TransactionLimit) {
 			extraTransactions = append(extraTransactions, rosettaTxID(txID))
 			continue
 		}
@@ -241,15 +321,18 @@ func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identif
 	// See https://www.rosetta-api.org/docs/common_mistakes.html#malformed-genesis-block
 	// We thus initialize the parent as the current block, and if the header is
 	// not the root block, we use its actual parent.
+	/** Need DPS for this
 	first, err := r.index.First()
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not get first block index: %w", err)
 	}
+	**/
+	var first uint64 = 0
 	var parent identifier.Block
 	if header.Height == first {
 		parent = rosettaBlockID(height, blockID)
 	} else {
-		parent = rosettaBlockID(height-1, header.ParentID)
+		parent = rosettaBlockID(height-1, flow.Identifier(header.ParentID))
 	}
 
 	// Now we just need to build the block.
@@ -310,10 +393,13 @@ func (r *Retriever) Transaction(rosBlockID identifier.Block, rosTxID identifier.
 	if err != nil {
 		return nil, fmt.Errorf("could not generate withdrawal event type: %w", err)
 	}
-	// TODO Retrieve A.8624b52f9ddcd04a.FlowIDTableStaking DelegatorRewardsPaid
+	delegatorRewardsPaid, err := r.generate.DelegatorRewardsPaid(dps.FlowSymbol)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate delegator rewards paid event type: %w", err)
+	}
 
 	// Retrieve the deposit and withdrawal events for the block (yes, all of them).
-	events, err := r.index.Events(height, flow.EventType(deposit), flow.EventType(withdrawal))
+	events, err := r.index.Events(height, flow.EventType(deposit), flow.EventType(withdrawal), flow.EventType(delegatorRewardsPaid))
 	if err != nil {
 		return nil, fmt.Errorf("could not get events: %w", err)
 	}
@@ -374,9 +460,14 @@ func (r *Retriever) operations(txID flow.Identifier, events []flow.Event) ([]*ob
 	if err != nil {
 		return nil, fmt.Errorf("could not generate withdrawal event type: %w", err)
 	}
+	delegatorRewardsPaid, err := r.generate.DelegatorRewardsPaid(dps.FlowSymbol)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate delegator rewards paid event type: %w", err)
+	}
 	priorities := map[string]uint{
-		deposit:    1,
-		withdrawal: 2,
+		deposit:              1,
+		withdrawal:           2,
+		delegatorRewardsPaid: 3,
 	}
 
 	// We then start by filtering out all events that don't have the right transaction

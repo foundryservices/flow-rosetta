@@ -40,15 +40,16 @@ func (v *Validator) Account(account identifier.Account) (flow.Address, error) {
 	// is valid.
 	var address flow.Address
 	copy(address[:], bytes)
-	ok := v.params.ChainID.Chain().IsValid(address)
-	if !ok {
-		return flow.EmptyAddress, failure.InvalidAccount{
-			Address: account.Address,
-			Description: failure.NewDescription(addressMisconfigured,
-				failure.WithString("active_chain", v.params.ChainID.String()),
-			),
-		}
-	}
+	// FIXME
+	// ok := v.params.ChainID.Chain().IsValid(address)
+	// if !ok {
+	// 	return flow.EmptyAddress, failure.InvalidAccount{
+	// 		Address: account.Address,
+	// 		Description: failure.NewDescription(addressMisconfigured,
+	// 			failure.WithString("active_chain", v.params.ChainID.String()),
+	// 		),
+	// 	}
+	// }
 
 	return address, nil
 }

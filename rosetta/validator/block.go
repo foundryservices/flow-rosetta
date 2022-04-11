@@ -15,8 +15,10 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/optakt/flow-rosetta/rosetta/failure"
@@ -31,15 +33,16 @@ func (v *Validator) Block(rosBlockID identifier.Block) (uint64, flow.Identifier,
 	// If both the index and the hash are missing, the block identifier is invalid, and
 	// the latest block ID is returned instead.
 	if rosBlockID.Index == nil && rosBlockID.Hash == "" {
-		last, err := v.index.Last()
+		last, err := v.accessAPI.GetLatestBlockHeader(context.Background(), true) // FIXME should we use isSealed?
+		// last, err := v.index.Last()
 		if err != nil {
 			return 0, flow.ZeroID, fmt.Errorf("could not retrieve last: %w", err)
 		}
-		header, err := v.index.Header(last)
-		if err != nil {
-			return 0, flow.ZeroID, fmt.Errorf("could not retrieve header: %w", err)
-		}
-		return last, header.ID(), nil
+		// header, err := v.index.Header(last)
+		// if err != nil {
+		// 	return 0, flow.ZeroID, fmt.Errorf("could not retrieve header: %w", err)
+		// }
+		return last.Height, flow.Identifier(last.ID), nil
 	}
 
 	// If a block hash is present, it should be a valid block ID for Flow.
@@ -56,10 +59,11 @@ func (v *Validator) Block(rosBlockID identifier.Block) (uint64, flow.Identifier,
 
 	// If a block index is present, it should be a valid height for the DPS.
 	if rosBlockID.Index != nil {
-		first, err := v.index.First()
-		if err != nil {
-			return 0, flow.ZeroID, fmt.Errorf("could not get first: %w", err)
-		}
+		// first, err := v.index.First()
+		// if err != nil {
+		// 	return 0, flow.ZeroID, fmt.Errorf("could not get first: %w", err)
+		// }
+		var first uint64 = 0 // FIXME: might be able to get from accessAPI
 		if *rosBlockID.Index < first {
 			return 0, flow.ZeroID, failure.InvalidBlock{
 				Description: failure.NewDescription(blockTooLow,
@@ -68,16 +72,17 @@ func (v *Validator) Block(rosBlockID identifier.Block) (uint64, flow.Identifier,
 				),
 			}
 		}
-		last, err := v.index.Last()
+		// last, err := v.index.Last()
+		last, err := v.accessAPI.GetLatestBlockHeader(context.Background(), true)
 		if err != nil {
 			return 0, flow.ZeroID, fmt.Errorf("could not get last: %w", err)
 		}
-		if *rosBlockID.Index > last {
+		if *rosBlockID.Index > last.Height {
 			return 0, flow.ZeroID, failure.UnknownBlock{
 				Index: *rosBlockID.Index,
 				Hash:  rosBlockID.Hash,
 				Description: failure.NewDescription(blockTooHigh,
-					failure.WithUint64("last_index", last),
+					failure.WithUint64("last_index", last.Height),
 				),
 			}
 		}
@@ -85,30 +90,38 @@ func (v *Validator) Block(rosBlockID identifier.Block) (uint64, flow.Identifier,
 
 	// If we don't have a height, fill it in now.
 	if rosBlockID.Index == nil {
-		blockID, _ := flow.HexStringToIdentifier(rosBlockID.Hash)
-		height, err := v.index.HeightForBlock(blockID)
+		blockID := sdk.HexToID(rosBlockID.Hash)
+		// blockID, _ := flow.HexStringToIdentifier(rosBlockID.Hash)
+		height, err := v.accessAPI.GetBlockHeaderByID(context.Background(), blockID)
+		//height, err := v.index.HeightForBlock(blockID)
 		if err != nil {
 			return 0, flow.ZeroID, fmt.Errorf("could not get height for block: %w", err)
 		}
-		rosBlockID.Index = &height
+		rosBlockID.Index = &height.Height
 	}
 
 	// The given block ID should match the block ID at the given height.
-	header, err := v.index.Header(*rosBlockID.Index)
+	header, err := v.accessAPI.GetBlockHeaderByHeight(context.Background(), *rosBlockID.Index)
+	// header, err := v.index.Header(*rosBlockID.Index)
 	if err != nil {
 		return 0, flow.ZeroID, fmt.Errorf("could not get header: %w", err)
 	}
-	if rosBlockID.Hash != "" && rosBlockID.Hash != header.ID().String() {
+	if rosBlockID.Hash != "" && rosBlockID.Hash != header.ID.Hex() {
 		return 0, flow.ZeroID, failure.InvalidBlock{
 			Description: failure.NewDescription(blockMismatch,
 				failure.WithUint64("block_index", *rosBlockID.Index),
 				failure.WithString("block_hash", rosBlockID.Hash),
-				failure.WithString("want_hash", header.ID().String()),
+				failure.WithString("want_hash", header.ID.Hex()),
 			),
 		}
 	}
 
-	return header.Height, header.ID(), nil
+	identifier, err := flow.HexStringToIdentifier(header.ID.Hex())
+	if err != nil {
+		return 0, flow.ZeroID, fmt.Errorf("could not convert to identifier: %w", err)
+	}
+
+	return header.Height, identifier, nil
 }
 
 // CompleteBlockID verifies that both index and hash are populated in the block ID.

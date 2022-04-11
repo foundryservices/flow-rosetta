@@ -14,13 +14,19 @@
 
 package mocks
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/onflow/flow-go/model/flow"
+)
 
 type Generator struct {
-	GetBalanceFunc      func(symbol string) ([]byte, error)
-	TokensDepositedFunc func(symbol string) (string, error)
-	TokensWithdrawnFunc func(symbol string) (string, error)
-	TransferTokensFunc  func(symbol string) ([]byte, error)
+	GetBalanceFunc           func(symbol string) ([]byte, error)
+	GetStakedBalanceFunc     func(symbol string) ([]byte, error)
+	TokensDepositedFunc      func(symbol string) (string, error)
+	TokensWithdrawnFunc      func(symbol string) (string, error)
+	TransferTokensFunc       func(symbol string) ([]byte, error)
+	DelegatorRewardsPaidFunc func(symbol string) (string, error)
 }
 
 func BaselineGenerator(t *testing.T) *Generator {
@@ -28,6 +34,9 @@ func BaselineGenerator(t *testing.T) *Generator {
 
 	g := Generator{
 		GetBalanceFunc: func(string) ([]byte, error) {
+			return []byte(GenericAmount(0).String()), nil
+		},
+		GetStakedBalanceFunc: func(string) ([]byte, error) {
 			return []byte(GenericAmount(0).String()), nil
 		},
 		TokensDepositedFunc: func(string) (string, error) {
@@ -39,12 +48,19 @@ func BaselineGenerator(t *testing.T) *Generator {
 		TransferTokensFunc: func(string) ([]byte, error) {
 			return GenericBytes, nil
 		},
+		DelegatorRewardsPaidFunc: func(string) (string, error) {
+			return string(GenericEventType(2)), nil
+		},
 	}
 
 	return &g
 }
 
 func (g *Generator) GetBalance(symbol string) ([]byte, error) {
+	return g.GetBalanceFunc(symbol)
+}
+
+func (g *Generator) GetStakedBalance(symbol string) ([]byte, error) {
 	return g.GetBalanceFunc(symbol)
 }
 
@@ -58,4 +74,12 @@ func (g *Generator) TokensWithdrawn(symbol string) (string, error) {
 
 func (g *Generator) TransferTokens(symbol string) ([]byte, error) {
 	return g.TransferTokensFunc(symbol)
+}
+
+func (g *Generator) DelegatorRewardsPaid(symbol string) (string, error) {
+	return g.DelegatorRewardsPaidFunc(symbol)
+}
+
+func (g *Generator) Custom(symbol string, chainID flow.ChainID, address flow.Address) (bool, []byte, error) {
+	return false, nil, nil
 }

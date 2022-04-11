@@ -7,6 +7,7 @@ on:
 
 env:
   GO_VERSION: 1.17
+  FLOW_GO_CRYPTO_VERSION: v0.25.0
 
 jobs:
   format:
@@ -14,33 +15,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
+      
+    - name: Check out FlowGo
+      uses: actions/checkout@v2
+      with:
+        repository: onflow/flow-go
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
+        path: flow-go
 
     - name: Format
-      run: go fmt -l -d ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+      run: |
+        cd flow-rosetta
+        go fmt ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
 
+    - name: Check out FlowGo
+      uses: actions/checkout@v2
+      with:
+        repository: onflow/flow-go
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
+        path: flow-go
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
     - name: Lint
-      uses: golangci/golangci-lint-action@v2
+      uses: golangci/golangci-lint-action@v3.1.0
       with:
         args: -v -E golint,misspell,gocyclo,gocritic,whitespace,goconst,bodyclose,unconvert,lll
-        version: v1.29 
+        version: v1.30
+        working-directory: flow-rosetta
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:  
       - uses: actions/checkout@v2
+        with:
+          path: flow-rosetta
 
       - name: Check out FlowGo
         uses: actions/checkout@v2
         with:
           repository: onflow/flow-go
-          ref: c0afa789365eb7a22713ed76b8de1e3efaf3a70a
+          ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
           path: flow-go
 
       - name: Set up Go
@@ -61,6 +90,7 @@ jobs:
       # https://grpc.io/docs/protoc-installation/#install-pre-compiled-binaries-any-os
       - name: Install Protobuf compiler
         run: |
+          cd flow-rosetta
           PB_REL="https://github.com/protocolbuffers/protobuf/releases"
           curl -LO $PB_REL/download/v3.17.3/protoc-3.17.3-linux-x86_64.zip
           unzip protoc-3.17.3-linux-x86_64.zip -d $HOME/.local
@@ -91,17 +121,23 @@ jobs:
       # This check makes sure that the `go.mod` and `go.sum` files for Go
       # modules are always up-to-date.
       - name: Verify Go modules
-        run: go mod tidy && git status && git --no-pager diff && git diff-index --quiet HEAD --
+        run: |
+          cd flow-rosetta 
+          go mod tidy && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
       # This check makes sure that the generated protocol buffer files in Go
       # have been updated in case there was a change in the definitions.
       - name: Verify generated files
-        run: go generate ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+        run: |
+          cd flow-rosetta
+          go generate ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
       # This check makes sure that we can compile the binary as a pure Go binary
       # without CGO support.
       - name: Verify compilation
-        run: go build -tags relic ./...
+        run: |
+          cd flow-rosetta
+          go build -tags relic ./...
 
   test:
     name: Test/Coverage
@@ -109,12 +145,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
 
     - name: Check out FlowGo
       uses: actions/checkout@v2
       with:
         repository: onflow/flow-go
-        ref: c0afa789365eb7a22713ed76b8de1e3efaf3a70a
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
         path: flow-go
 
     - name: Set up Go
@@ -144,10 +182,12 @@ jobs:
         go generate .
 
     - name: Check Coverage
-      run: make coverage
+      run: |
+        cd flow-rosetta
+        make coverage
 
     - name: Upload Coverage HTMl artifact
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
-        path: ./coverage/coverage.html
+        path: ./flow-rosetta/coverage/coverage.html

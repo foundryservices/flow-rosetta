@@ -19,33 +19,54 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/onflow/flow-go/model/flow"
+
 	"github.com/optakt/flow-dps/models/dps"
 )
 
 // Generator dynamically generates Cadence scripts from templates.
 type Generator struct {
-	params          dps.Params
-	getBalance      *template.Template
-	transferTokens  *template.Template
-	tokensDeposited *template.Template
-	tokensWithdrawn *template.Template
+	params               dps.Params
+	getBalance           *template.Template
+	getStakedBalance     *template.Template
+	transferTokens       *template.Template
+	tokensDeposited      *template.Template
+	tokensWithdrawn      *template.Template
+	delegatorRewardsPaid *template.Template
+	custom               map[flow.ChainID]map[flow.Address]*template.Template
 }
 
 // NewGenerator returns a Generator using the given parameters.
 func NewGenerator(params dps.Params) *Generator {
 	g := Generator{
-		params:          params,
-		getBalance:      template.Must(template.New("get_balance").Parse(getBalance)),
-		transferTokens:  template.Must(template.New("transfer_tokens").Parse(transferTokens)),
-		tokensDeposited: template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
-		tokensWithdrawn: template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
+		params:               params,
+		getBalance:           template.Must(template.New("get_balance").Parse(getBalance)),
+		getStakedBalance:     template.Must(template.New("get_staked_balance").Parse(getStakedBalance)),
+		transferTokens:       template.Must(template.New("transfer_tokens").Parse(transferTokens)),
+		tokensDeposited:      template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
+		tokensWithdrawn:      template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
+		delegatorRewardsPaid: template.Must(template.New("delegator_rewards_paid").Parse(delegatorRewardsPaid)),
+		custom:               map[flow.ChainID]map[flow.Address]*template.Template{},
 	}
+
+	var mainnetCustom = make(map[flow.Address]*template.Template)
+
+	for address, contract := range mainnetContracts {
+		mainnetCustom[flow.HexToAddress(address)] = template.Must(template.New(fmt.Sprintf("mainnet_%s", address)).Parse(contract))
+	}
+	g.custom[flow.Mainnet] = mainnetCustom
+
 	return &g
 }
 
 // GetBalance generates a Cadence script to retrieve the balance of an account.
 func (g *Generator) GetBalance(symbol string) ([]byte, error) {
 	return g.bytes(g.getBalance, symbol)
+}
+
+// GetStakedBalance generates a Cadence script to retrieve the balance of an account with
+func (g *Generator) GetStakedBalance(symbol string) ([]byte, error) {
+	return g.bytes(g.getStakedBalance, symbol)
 }
 
 // TransferTokens generates a Cadence script to operate a token transfer transaction.
@@ -61,6 +82,28 @@ func (g *Generator) TokensDeposited(symbol string) (string, error) {
 // TokensWithdrawn generates a Cadence script that matches the Flow event for tokens being withdrawn.
 func (g *Generator) TokensWithdrawn(symbol string) (string, error) {
 	return g.string(g.tokensWithdrawn, symbol)
+}
+
+// DelegatorRewardsPaid generates a Cadence script that matches the Flow event for delegator rewards being paid.
+func (g *Generator) DelegatorRewardsPaid(symbol string) (string, error) {
+	return g.string(g.delegatorRewardsPaid, symbol)
+}
+
+func (g *Generator) Custom(symbol string, chainID flow.ChainID, address flow.Address) (bool, []byte, error) {
+
+	var has bool
+
+	chainCustom, has := g.custom[chainID]
+	if !has {
+		return false, nil, nil
+	}
+	template, has := chainCustom[address]
+	if !has {
+		return false, nil, nil
+	}
+
+	bytes, err := g.bytes(template, symbol)
+	return true, bytes, err
 }
 
 func (g *Generator) string(template *template.Template, symbol string) (string, error) {

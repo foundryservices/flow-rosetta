@@ -196,9 +196,10 @@ func accountValidator(sl validator.StructLevel) {
 	if rosAccountID.Address == "" {
 		sl.ReportError(rosAccountID.Address, addressField, addressField, addressEmpty, "")
 	}
-	if len(rosAccountID.Address) != rosetta.HexAddressSize {
-		sl.ReportError(rosAccountID.Address, addressField, addressField, addressLength, "")
-	}
+	// Skipping length check since we are allowing validator ids in this field as well
+	// if len(rosAccountID.Address) != rosetta.HexAddressSize {
+	// 	sl.ReportError(rosAccountID.Address, addressField, addressField, addressLength, "")
+	// }
 }
 
 // transactionValidator ensures that the transaction identifier is populated and has correct length.

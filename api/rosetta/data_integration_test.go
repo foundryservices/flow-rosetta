@@ -100,7 +100,7 @@ func setupAPI(t *testing.T, db *badger.DB) *rosetta.Data {
 
 	params := dps.FlowParams[dps.FlowLocalnet]
 	config := configuration.New(params.ChainID)
-	validate := validator.New(params, index, config)
+	validate := validator.New(params, index, nil, config)
 	generate := scripts.NewGenerator(params)
 	invoke, err := invoker.New(index)
 	require.NoError(t, err)

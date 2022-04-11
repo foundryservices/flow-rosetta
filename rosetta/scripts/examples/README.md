@@ -1,0 +1,1 @@
+These are some example cadence scripts you can run with the flow CLI

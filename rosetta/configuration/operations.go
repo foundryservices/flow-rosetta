@@ -16,5 +16,8 @@ package configuration
 
 // Supported operations.
 const (
-	OperationTransfer = "TRANSFER"
+	OperationTransfer        = "TRANSFER"
+	OperationDelegatorReward = "REWARD"
+
+	StatusSuccess = "SUCCESS"
 )

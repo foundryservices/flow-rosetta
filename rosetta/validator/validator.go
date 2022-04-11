@@ -17,23 +17,26 @@ package validator
 import (
 	"github.com/go-playground/validator/v10"
 
+	"github.com/onflow/flow-go-sdk/client"
 	"github.com/optakt/flow-dps/models/dps"
 )
 
 // Validator validates Rosetta object identifiers.
 type Validator struct {
-	params   dps.Params
-	index    dps.Reader
-	validate *validator.Validate
+	params    dps.Params
+	index     dps.Reader
+	accessAPI *client.Client
+	validate  *validator.Validate
 }
 
 // New returns a new Validator.
-func New(params dps.Params, index dps.Reader, config Configuration) *Validator {
+func New(params dps.Params, index dps.Reader, accessAPI *client.Client, config Configuration) *Validator {
 
 	v := Validator{
-		params:   params,
-		index:    index,
-		validate: newRequestValidator(config),
+		params:    params,
+		index:     index,
+		accessAPI: accessAPI,
+		validate:  newRequestValidator(config),
 	}
 
 	return &v

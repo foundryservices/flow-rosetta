@@ -19,4 +19,5 @@ package converter
 type Generator interface {
 	TokensDeposited(symbol string) (string, error)
 	TokensWithdrawn(symbol string) (string, error)
+	DelegatorRewardsPaid(symbol string) (string, error)
 }
