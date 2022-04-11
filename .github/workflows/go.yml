@@ -41,8 +41,7 @@ jobs:
         with:
           repository: onflow/flow-go
           ref: v0.25.0
-
-      - run: ls
+          path: flow-go
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -88,6 +87,7 @@ jobs:
         run: |
           cd ./flow-go/crypto
           go generate .
+          cd ../../
 
       # This check makes sure that the `go.mod` and `go.sum` files for Go
       # modules are always up-to-date.
