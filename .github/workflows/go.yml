@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Format
-      run: go fmt -d ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
+      run: go fmt ./... && git status && git --no-pager diff && git diff-index --quiet HEAD --
 
   lint:
     name: Lint
@@ -41,7 +41,8 @@ jobs:
         with:
           repository: onflow/flow-go
           ref: v0.25.0
-          path: flow-go
+
+      - run: ls
 
       - name: Set up Go
         uses: actions/setup-go@v2
