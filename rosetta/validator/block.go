@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/onflow/flow-go/model/flow"
 	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/optakt/flow-rosetta/rosetta/failure"
 	"github.com/optakt/flow-rosetta/rosetta/identifier"

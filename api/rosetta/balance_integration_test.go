@@ -35,8 +35,9 @@ import (
 	"github.com/optakt/flow-rosetta/rosetta/request"
 	//"github.com/optakt/flow-rosetta/rosetta/response"
 )
+
 // FIXME
-/** 
+/**
 func TestAPI_Balance(t *testing.T) {
 
 	db := setupDB(t)

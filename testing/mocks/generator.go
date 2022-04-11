@@ -15,16 +15,17 @@
 package mocks
 
 import (
-	"github.com/onflow/flow-go/model/flow"
 	"testing"
+
+	"github.com/onflow/flow-go/model/flow"
 )
 
 type Generator struct {
-	GetBalanceFunc      func(symbol string) ([]byte, error)
-	GetStakedBalanceFunc func(symbol string) ([]byte, error)
-	TokensDepositedFunc func(symbol string) (string, error)
-	TokensWithdrawnFunc func(symbol string) (string, error)
-	TransferTokensFunc  func(symbol string) ([]byte, error)
+	GetBalanceFunc           func(symbol string) ([]byte, error)
+	GetStakedBalanceFunc     func(symbol string) ([]byte, error)
+	TokensDepositedFunc      func(symbol string) (string, error)
+	TokensWithdrawnFunc      func(symbol string) (string, error)
+	TransferTokensFunc       func(symbol string) ([]byte, error)
 	DelegatorRewardsPaidFunc func(symbol string) (string, error)
 }
 

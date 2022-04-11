@@ -17,35 +17,36 @@ package scripts
 import (
 	"bytes"
 	"fmt"
-	"github.com/onflow/flow-go/model/flow"
 	"text/template"
+
+	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/optakt/flow-dps/models/dps"
 )
 
 // Generator dynamically generates Cadence scripts from templates.
 type Generator struct {
-	params          dps.Params
-	getBalance      *template.Template
-	getStakedBalance *template.Template
-	transferTokens  *template.Template
-	tokensDeposited *template.Template
-	tokensWithdrawn *template.Template
+	params               dps.Params
+	getBalance           *template.Template
+	getStakedBalance     *template.Template
+	transferTokens       *template.Template
+	tokensDeposited      *template.Template
+	tokensWithdrawn      *template.Template
 	delegatorRewardsPaid *template.Template
-	custom           map[flow.ChainID]map[flow.Address]*template.Template
+	custom               map[flow.ChainID]map[flow.Address]*template.Template
 }
 
 // NewGenerator returns a Generator using the given parameters.
 func NewGenerator(params dps.Params) *Generator {
 	g := Generator{
-		params:          params,
-		getBalance:      template.Must(template.New("get_balance").Parse(getBalance)),
-		getStakedBalance: template.Must(template.New("get_staked_balance").Parse(getStakedBalance)),
-		transferTokens:  template.Must(template.New("transfer_tokens").Parse(transferTokens)),
-		tokensDeposited: template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
-		tokensWithdrawn: template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
+		params:               params,
+		getBalance:           template.Must(template.New("get_balance").Parse(getBalance)),
+		getStakedBalance:     template.Must(template.New("get_staked_balance").Parse(getStakedBalance)),
+		transferTokens:       template.Must(template.New("transfer_tokens").Parse(transferTokens)),
+		tokensDeposited:      template.Must(template.New("tokensDeposited").Parse(tokensDeposited)),
+		tokensWithdrawn:      template.Must(template.New("withdrawal").Parse(tokensWithdrawn)),
 		delegatorRewardsPaid: template.Must(template.New("delegator_rewards_paid").Parse(delegatorRewardsPaid)),
-		custom:           map[flow.ChainID]map[flow.Address]*template.Template{},
+		custom:               map[flow.ChainID]map[flow.Address]*template.Template{},
 	}
 
 	var mainnetCustom = make(map[flow.Address]*template.Template)

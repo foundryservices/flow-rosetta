@@ -43,6 +43,7 @@ import (
 	"github.com/optakt/flow-rosetta/rosetta/converter"
 	"github.com/optakt/flow-rosetta/rosetta/retriever"
 	"github.com/optakt/flow-rosetta/rosetta/scripts"
+
 	//"github.com/optakt/flow-rosetta/rosetta/submitter"
 	//"github.com/optakt/flow-rosetta/rosetta/transactor"
 	"github.com/optakt/flow-rosetta/rosetta/validator"
@@ -112,8 +113,8 @@ func run() int {
 	dpsAPI := api.NewAPIClient(conn)
 	index := api.IndexFromAPI(dpsAPI, codec)
 
-// FIXME
-// wait:
+	// FIXME
+	// wait:
 	// Deduce chain ID from DPS API to configure parameters for script exec.
 
 	var first uint64 = 27341470
@@ -127,10 +128,10 @@ func run() int {
 		}
 		return failure
 	}
-	
+
 	root, err := index.Header(first)
 	**/
-	
+
 	if err != nil {
 		log.Error().Uint64("first", first).Err(err).Msg("could not get root header from DPS API")
 		return failure

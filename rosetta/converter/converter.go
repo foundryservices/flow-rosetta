@@ -52,8 +52,8 @@ func New(gen Generator) (*Converter, error) {
 	}
 
 	c := Converter{
-		deposit:    flow.EventType(deposit),
-		withdrawal: flow.EventType(withdrawal),
+		deposit:     flow.EventType(deposit),
+		withdrawal:  flow.EventType(withdrawal),
 		rewardsPaid: flow.EventType(rewardsPaid),
 	}
 

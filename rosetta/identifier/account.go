@@ -18,7 +18,7 @@ package identifier
 // in this implementation for now, though they will probably have to be added to support
 // staking on Coinbase in the future.
 type Account struct {
-	Address string `json:"address"`
+	Address    string     `json:"address"`
 	SubAccount SubAccount `json:"sub_account"`
 }
 

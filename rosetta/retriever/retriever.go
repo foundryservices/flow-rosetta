@@ -43,13 +43,13 @@ import (
 type Retriever struct {
 	cfg Config
 
-	params   dps.Params
-	index    dps.Reader
+	params    dps.Params
+	index     dps.Reader
 	accessAPI *client.Client
-	validate Validator
-	generate Generator
-	invoke   Invoker
-	convert  Converter
+	validate  Validator
+	generate  Generator
+	invoke    Invoker
+	convert   Converter
 }
 
 // New instantiates and returns a Retriever using the injected dependencies, as well as the provided options.
@@ -64,14 +64,14 @@ func New(params dps.Params, index dps.Reader, accessAPI *client.Client, validate
 	}
 
 	r := Retriever{
-		cfg:      cfg,
-		params:   params,
-		index:    index,
+		cfg:       cfg,
+		params:    params,
+		index:     index,
 		accessAPI: accessAPI,
-		validate: validate,
-		generate: generator,
-		invoke:   invoke,
-		convert:  convert,
+		validate:  validate,
+		generate:  generator,
+		invoke:    invoke,
+		convert:   convert,
 	}
 
 	return &r
@@ -133,7 +133,7 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 
 	// Run validation on the account qualifier. If it is valid, this will return
 	// the associated Flow account address.
-	
+
 	// TODO ignore error if they sent a validiator address
 	_, err = r.validate.Account(rosAccountID)
 	if err != nil {
@@ -206,8 +206,8 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 				return identifier.Block{}, nil, err
 			}
 			delegators = append(delegators, &object.Delegator{
-				Address:                       delegator.ID,
-				DelegatedValue: 							delegatedValue,
+				Address:        delegator.ID,
+				DelegatedValue: delegatedValue,
 			})
 		}
 
@@ -216,10 +216,10 @@ func (r *Retriever) Balances(rosBlockID identifier.Block, rosAccountID identifie
 			return identifier.Block{}, nil, err
 		}
 		amount := object.Amount{
-			Currency: rosettaCurrency(symbol, decimals[symbol]),
-			Value:    strconv.FormatUint(balance, 10),
+			Currency:       rosettaCurrency(symbol, decimals[symbol]),
+			Value:          strconv.FormatUint(balance, 10),
 			DelegatedValue: stakedBalance,
-			Delegators: delegators,
+			Delegators:     delegators,
 		}
 
 		amounts = append(amounts, amount)
@@ -261,7 +261,6 @@ func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identif
 		return nil, nil, fmt.Errorf("could not get header: %w", err)
 	}
 
-
 	blockIDs := []sdk.Identifier{header.ID}
 
 	// Next, we get all the events for the block to extract deposit and withdrawal events.
@@ -278,15 +277,14 @@ func (r *Retriever) Block(rosBlockID identifier.Block) (*object.Block, []identif
 	for _, sdkEvents := range blockEvents {
 		for _, evt := range sdkEvents.Events {
 			txMap[flow.Identifier(evt.TransactionID)] = append(txMap[flow.Identifier(evt.TransactionID)], flow.Event{
-				Type:    flow.EventType(evt.Type),
-				TransactionID: flow.Identifier(evt.TransactionID),
+				Type:             flow.EventType(evt.Type),
+				TransactionID:    flow.Identifier(evt.TransactionID),
 				TransactionIndex: uint32(evt.TransactionIndex),
-				EventIndex: uint32(evt.EventIndex),
-				Payload: evt.Payload,
+				EventIndex:       uint32(evt.EventIndex),
+				Payload:          evt.Payload,
 			})
 		}
 	}
-
 
 	// Get all transaction IDs for this height.
 	/** Need DPS for this
@@ -467,8 +465,8 @@ func (r *Retriever) operations(txID flow.Identifier, events []flow.Event) ([]*ob
 		return nil, fmt.Errorf("could not generate delegator rewards paid event type: %w", err)
 	}
 	priorities := map[string]uint{
-		deposit:    1,
-		withdrawal: 2,
+		deposit:              1,
+		withdrawal:           2,
 		delegatorRewardsPaid: 3,
 	}
 
