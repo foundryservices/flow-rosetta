@@ -94,7 +94,7 @@ jobs:
           cd ../../
           pwd
           ls
-          cd ./flow-rosetta
+          cd flow-rosetta
 
       # This check makes sure that the `go.mod` and `go.sum` files for Go
       # modules are always up-to-date.
