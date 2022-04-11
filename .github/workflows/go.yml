@@ -7,6 +7,7 @@ on:
 
 env:
   GO_VERSION: 1.17
+  FLOW_GO_CRYPTO_VERSION: v0.25.0
 
 jobs:
   format:
@@ -21,7 +22,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: onflow/flow-go
-        ref: v0.25.0
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
         path: flow-go
 
     - name: Format
@@ -53,7 +54,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: onflow/flow-go
-          ref: v0.25.0
+          ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
           path: flow-go
 
       - name: Set up Go
@@ -136,7 +137,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: onflow/flow-go
-        ref: v0.25.0
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
         path: flow-go
 
     - name: Set up Go
