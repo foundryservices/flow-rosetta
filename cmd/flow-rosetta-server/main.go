@@ -30,6 +30,7 @@ import (
 	"github.com/ziflex/lecho/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/onflow/flow-go-sdk/client"
 	"github.com/onflow/flow-go/model/flow"
@@ -100,6 +101,15 @@ func run() int {
 	log = log.Level(level)
 	elog := lecho.From(log)
 
+	// Tracer initialization.
+	tracer.Start(
+		// tracer.WithEnv(), TODO
+		tracer.WithService("flow-rosetta"),
+		tracer.WithGlobalTag("protocol", "flow"),
+		tracer.WithServiceVersion("v0.0.1"),
+	)
+	defer tracer.Stop()
+
 	// Initialize codec.
 	codec := zbor.NewCodec()
 
@@ -113,11 +123,8 @@ func run() int {
 	dpsAPI := api.NewAPIClient(conn)
 	index := api.IndexFromAPI(dpsAPI, codec)
 
-	// FIXME
 	// wait:
 	// Deduce chain ID from DPS API to configure parameters for script exec.
-
-	var first uint64 = 27341470
 	/** FIXME
 	first, err := index.First()
 	if err != nil {
@@ -130,12 +137,12 @@ func run() int {
 	}
 
 	root, err := index.Header(first)
-	**/
 
 	if err != nil {
 		log.Error().Uint64("first", first).Err(err).Msg("could not get root header from DPS API")
 		return failure
 	}
+	**/
 
 	params, ok := dps.FlowParams[flow.Mainnet] // params, ok := dps.FlowParams[root.ChainID]
 	if !ok {
