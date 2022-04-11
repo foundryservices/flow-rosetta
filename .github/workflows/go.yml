@@ -35,6 +35,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: flow-rosetta
+
+    - name: Check out FlowGo
+      uses: actions/checkout@v2
+      with:
+        repository: onflow/flow-go
+        ref: ${{ env.FLOW_GO_CRYPTO_VERSION }}
+        path: flow-go
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -46,6 +55,7 @@ jobs:
       with:
         args: -v -E golint,misspell,gocyclo,gocritic,whitespace,goconst,bodyclose,unconvert,lll
         version: v1.30
+        working-directory: flow-rosetta
 
   build:
     name: Build
