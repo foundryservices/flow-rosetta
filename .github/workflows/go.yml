@@ -65,6 +65,7 @@ jobs:
       # https://grpc.io/docs/protoc-installation/#install-pre-compiled-binaries-any-os
       - name: Install Protobuf compiler
         run: |
+          cd flow-rosetta
           PB_REL="https://github.com/protocolbuffers/protobuf/releases"
           curl -LO $PB_REL/download/v3.17.3/protoc-3.17.3-linux-x86_64.zip
           unzip protoc-3.17.3-linux-x86_64.zip -d $HOME/.local
@@ -78,6 +79,7 @@ jobs:
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
           go install github.com/srikrsna/protoc-gen-gotag@v0.6.1
+          cd ~
 
       - name: Cache Crypto package
         uses: actions/cache@v2
@@ -91,8 +93,10 @@ jobs:
         run: |
           cd ./flow-go/crypto
           go generate .
-          cd ../../
+          cd ~
+          pwd
           ls
+          cd ./flow-rosetta
 
       # This check makes sure that the `go.mod` and `go.sum` files for Go
       # modules are always up-to-date.
